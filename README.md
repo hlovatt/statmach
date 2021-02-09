@@ -8,11 +8,13 @@ Examples are many appliances (kettle, toaster, etc.),
 machines in general (traffic lights, factory automation, etc.), and
 stateful software (UI screens, wizards, etc.).
 These are very broad categories of uses and therefore state machines are common.
+
 A frequent characteristic of a state machine is that the input events arrive asynchronously and therefore adding
 a formal structure is useful otherwise the code becomes difficult to understand, debug, and maintain.
 You can 'roll-your-own' state machine; but using a pre-tested module, like this one,
 is both easier and more reliable.
 In particular, error handling is very tricky to get right.
+
 At a top (most abstract) level state machines are easy to code, just:
 
   1. List the inputs (events).
@@ -25,6 +27,15 @@ At a top (most abstract) level state machines are easy to code, just:
   3. List the transitions from one state to the next in response to an event and at the same time give the new output.
   
 The above requirements are often represented as a state diagram, which is great to document code (see example diagrams below).
+
+### Instalation
+
+The code is written in Python 3.5 and is designed run on [MicroPython](https://micropython.org) 
+(making it suitable for real hardware) as well as desktop (normal) Python.
+All the code is in one small file (``statmech.py``).
+
+  1. pip install --update statmech
+  2. Copy ``statmech.py`` into your project.
 
 ### Terminology Used in this Module
 
@@ -53,49 +64,52 @@ E.g. an edge detector
 ![Edge Detector State Diagram](media/EdgeDetectorStateDiagram.png)
     
 ```python
-def edge_detector():
-    Bit = enum.Enum('Bit', 'ZERO ONE')  # 1. & 2. Define the inputs (in this case also the outputs).
+Bit = enum.Enum('Bit', 'ZERO ONE')  # 1. & 2. Define the inputs (in this case also the outputs).
 
-    s_i: typing.Final = State(ident='i')  # 3. Define the states.
-    s_0: typing.Final = State(ident=0)
-    s_1: typing.Final = State(ident=1)
+s_i: typing.Final = State(ident='i')  # 3. Define the states.
+s_0: typing.Final = State(ident=0)
+s_1: typing.Final = State(ident=1)
 
-    s_i.actions = {Bit.ZERO: (s_0, Bit.ZERO), Bit.ONE: (s_1, Bit.ZERO)}  # 4. Define the actions.
-    s_0.actions = {Bit.ZERO: (s_0, Bit.ZERO), Bit.ONE: (s_1, Bit.ONE)}
-    s_1.actions = {Bit.ZERO: (s_0, Bit.ONE), Bit.ONE: (s_1, Bit.ZERO)}
+s_i.actions = {Bit.ZERO: (s_0, Bit.ZERO), Bit.ONE: (s_1, Bit.ZERO)}  # 4. Define the actions.
+s_0.actions = {Bit.ZERO: (s_0, Bit.ZERO), Bit.ONE: (s_1, Bit.ONE)}
+s_1.actions = {Bit.ZERO: (s_0, Bit.ONE), Bit.ONE: (s_1, Bit.ZERO)}
 
-    with Machine(initial_state=s_i) as machine:  # 5. Define the machine.
-        assert machine.state is s_i
-        assert machine.fire(event=Bit.ZERO) is Bit.ZERO  # 6. Fire events and obtain outputs.
-        assert machine.state is s_0
-        assert machine.fire(event=Bit.ZERO) is Bit.ZERO
-        assert machine.state is s_0
-        assert machine.fire(event=Bit.ONE) is Bit.ONE
-        assert machine.state is s_1
-        assert machine.fire(event=Bit.ONE) is Bit.ZERO
-        assert machine.state is s_1
-        assert machine.fire(event=Bit.ZERO) is Bit.ONE
-        assert machine.state is s_0
+with Machine(initial_state=s_i) as machine:  # 5. Define the machine.
+    assert machine.state is s_i
+    assert machine.fire(event=Bit.ZERO) is Bit.ZERO  # 6. Fire events and obtain outputs.
+    assert machine.state is s_0
+    assert machine.fire(event=Bit.ZERO) is Bit.ZERO
+    assert machine.state is s_0
+    assert machine.fire(event=Bit.ONE) is Bit.ONE
+    assert machine.state is s_1
+    assert machine.fire(event=Bit.ONE) is Bit.ZERO
+    assert machine.state is s_1
+    assert machine.fire(event=Bit.ZERO) is Bit.ONE
+    assert machine.state is s_0
 ```
 
 Note how the startup is dealt with, initially outputting a 0 for either input.
 This special start up condition is achieved using a
 start up state that is not used again after the first event is fired.
 This unique startup state is a common feature of state space machines.
+
 The edge detector is an example of a state machine that has an output associated with each action,
 these are called Mealy Machine (see below) and they use the class ``State`` to define their states.
-A more complicated example is a traffic light machine.
-This has two common requirements: the events arrive asynchronously and it is important (because it is safety critical)
+
+A more complicated example is a traffic light machine:
+
+![Traffic Light State Diagram](media/TrafficLightStateDiagram.png)
+    
+The traffic light example has two common requirements: the events arrive asynchronously and it is important (because it is safety critical)
 that all events are dealt with even if they arrive unexpectedly.
 For example if the traffic light is red and the amber timeout occurs, this is an error because the machine is waiting
 for the red timeout not the amber.
 
-![Traffic Light State Diagram](media/TrafficLightStateDiagram.png)
-    
 Note in the diagram, upper left, how the unexpected events and the error event are dealt with for the whole machine,
 rather than coding this requirement on all states individually.
 These machine actions can be 'overridden' by a state; so for example when in the red state and
 the red timer finished the next state is green, as expected (not an error).
+
 The advantage of the machine dealing with common actions is that the actions of the state machine are much
 easier to follow.
 
@@ -141,9 +155,11 @@ with Machine(initial_state=red) as machine:  # 5. The machine.
 
 Note how the defining actions in this case are split between state actions, 4a, and machine actions, 4b,
 which makes the code shorter, easier to maintain, and easier to debug.
+
 The traffic light machine is an example of a state machine that has an output associated with each state,
 these are called Moore Machine (see below) and they use the class ``StateWithValue`` to define their states.
-For more examples see ``test_statmach.py``.
+
+For more state machine examples see ``test_statmach.py``.
 
 ### Pythonic Aspects of this Module
 
