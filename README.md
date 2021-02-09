@@ -1,4 +1,4 @@
-# statcon
+# statmech
 
 ## Pythonic Finite State Machine
 
