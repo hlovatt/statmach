@@ -195,4 +195,5 @@ In the strictest sense the state machine implemented by this module is superset 
      (thus giving extra state that is not part of the state machine 'per se').
   3. Has extensive error control via Python exceptions and handling in ``__exit__``.
   4. Has machine actions that can be 'overridden' by state actions.
+  5. The machine is also a state and therefore machines can be nested.
 
