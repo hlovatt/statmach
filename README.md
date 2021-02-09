@@ -142,9 +142,9 @@ class Outputs(enum.Enum):  # 2. The outputs.
     FLASHING_RED = enum.auto()
 
 flashing_red: typing.Final = StateWithValue(ident='flashing_red', value=Outputs.FLASHING_RED)  # 3. The states.
-red: typing.Final = StateWithValue(ident='red', value=Outputs.RED)
-amber: typing.Final = StateWithValue(ident='amber', value=Outputs.AMBER)
-green: typing.Final = StateWithValue(ident='green', value=Outputs.GREEN)
+red = StateWithValue(ident='red', value=Outputs.RED)
+amber = StateWithValue(ident='amber', value=Outputs.AMBER)
+green = StateWithValue(ident='green', value=Outputs.GREEN)
 
 red.actions[Timeouts.RED_TIMEOUT] = green.action  # 4a. The *state* actions.
 green.actions[Timeouts.GREEN_TIMEOUT] = amber.action
