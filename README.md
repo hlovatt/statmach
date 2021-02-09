@@ -53,29 +53,29 @@ E.g. an edge detector
 ![Edge Detector State Diagram](media/EdgeDetectorStateDiagram.png)
     
 ```python
-    def edge_detector():
-        Bit = enum.Enum('Bit', 'ZERO ONE')  # 1. & 2. Define the inputs (in this case also the outputs).
-        
-        s_i: typing.Final = State(ident='i')  # 3. Define the states.
-        s_0: typing.Final = State(ident=0)
-        s_1: typing.Final = State(ident=1)
-        
-        s_i.actions = {Bit.ZERO: (s_0, Bit.ZERO), Bit.ONE: (s_1, Bit.ZERO)}  # 4. Define the actions.
-        s_0.actions = {Bit.ZERO: (s_0, Bit.ZERO), Bit.ONE: (s_1, Bit.ONE)}
-        s_1.actions = {Bit.ZERO: (s_0, Bit.ONE), Bit.ONE: (s_1, Bit.ZERO)}
-        
-        with Machine(initial_state=s_i) as machine:  # 5. Define the machine.
-            assert machine.state is s_i
-            assert machine.fire(event=Bit.ZERO) is Bit.ZERO  # 6. Fire events and obtain outputs.
-            assert machine.state is s_0
-            assert machine.fire(event=Bit.ZERO) is Bit.ZERO
-            assert machine.state is s_0
-            assert machine.fire(event=Bit.ONE) is Bit.ONE
-            assert machine.state is s_1
-            assert machine.fire(event=Bit.ONE) is Bit.ZERO
-            assert machine.state is s_1
-            assert machine.fire(event=Bit.ZERO) is Bit.ONE
-            assert machine.state is s_0
+def edge_detector():
+    Bit = enum.Enum('Bit', 'ZERO ONE')  # 1. & 2. Define the inputs (in this case also the outputs).
+
+    s_i: typing.Final = State(ident='i')  # 3. Define the states.
+    s_0: typing.Final = State(ident=0)
+    s_1: typing.Final = State(ident=1)
+
+    s_i.actions = {Bit.ZERO: (s_0, Bit.ZERO), Bit.ONE: (s_1, Bit.ZERO)}  # 4. Define the actions.
+    s_0.actions = {Bit.ZERO: (s_0, Bit.ZERO), Bit.ONE: (s_1, Bit.ONE)}
+    s_1.actions = {Bit.ZERO: (s_0, Bit.ONE), Bit.ONE: (s_1, Bit.ZERO)}
+
+    with Machine(initial_state=s_i) as machine:  # 5. Define the machine.
+        assert machine.state is s_i
+        assert machine.fire(event=Bit.ZERO) is Bit.ZERO  # 6. Fire events and obtain outputs.
+        assert machine.state is s_0
+        assert machine.fire(event=Bit.ZERO) is Bit.ZERO
+        assert machine.state is s_0
+        assert machine.fire(event=Bit.ONE) is Bit.ONE
+        assert machine.state is s_1
+        assert machine.fire(event=Bit.ONE) is Bit.ZERO
+        assert machine.state is s_1
+        assert machine.fire(event=Bit.ZERO) is Bit.ONE
+        assert machine.state is s_0
 ```
 
 Note how the startup is dealt with, initially outputting a 0 for either input
@@ -100,43 +100,43 @@ The advantage of the machine dealing with common actions is that the actions of 
 easier to follow.
 
 ```python
-        class Timeouts(enum.Enum):  # 1. The inputs.
-            RED_TIMEOUT = enum.auto()
-            AMBER_TIMEOUT = enum.auto()
-            GREEN_TIMEOUT = enum.auto()
-            ERROR = enum.auto()
-        class Outputs(enum.Enum):  # 2. The outputs.
-            RED = enum.auto()
-            AMBER = enum.auto()
-            GREEN = enum.auto()
-            FLASHING_RED = enum.auto()
-            
-        flashing_red: typing.Final = StateWithValue(ident='flashing_red', value=Outputs.FLASHING_RED)  # 3. The states.
-        red: typing.Final = StateWithValue(ident='red', value=Outputs.RED)
-        amber: typing.Final = StateWithValue(ident='amber', value=Outputs.AMBER)
-        green: typing.Final = StateWithValue(ident='green', value=Outputs.GREEN)
-        
-        red.actions[Timeouts.RED_TIMEOUT] = green.action  # 4a. The *state* actions.
-        green.actions[Timeouts.GREEN_TIMEOUT] = amber.action
-        amber.actions[Timeouts.AMBER_TIMEOUT] = red.action
-        
-        with Machine(initial_state=red) as machine:  # 5. The machine.
-            machine.actions[Timeouts.RED_TIMEOUT] = flashing_red.action  # 4b. The *machine* actions.
-            machine.actions[Timeouts.AMBER_TIMEOUT] = flashing_red.action
-            machine.actions[Timeouts.GREEN_TIMEOUT] = flashing_red.action
-            machine.actions[Timeouts.ERROR] = flashing_red.action
-            
-            assert machine.state is red
-            assert machine.fire(event=Timeouts.RED_TIMEOUT) is Outputs.GREEN  # 6. Fire events and obtain outputs.
-            assert machine.state is green
-            assert machine.fire(event=Timeouts.GREEN_TIMEOUT) is Outputs.AMBER
-            assert machine.state is amber
-            assert machine.fire(event=Timeouts.AMBER_TIMEOUT) is Outputs.RED
-            assert machine.state is red
-            assert machine.fire(event=Timeouts.AMBER_TIMEOUT) is Outputs.FLASHING_RED
-            assert machine.state is flashing_red
-            assert machine.fire(event=Timeouts.ERROR) is Outputs.FLASHING_RED
-            assert machine.state is flashing_red
+class Timeouts(enum.Enum):  # 1. The inputs.
+    RED_TIMEOUT = enum.auto()
+    AMBER_TIMEOUT = enum.auto()
+    GREEN_TIMEOUT = enum.auto()
+    ERROR = enum.auto()
+class Outputs(enum.Enum):  # 2. The outputs.
+    RED = enum.auto()
+    AMBER = enum.auto()
+    GREEN = enum.auto()
+    FLASHING_RED = enum.auto()
+
+flashing_red: typing.Final = StateWithValue(ident='flashing_red', value=Outputs.FLASHING_RED)  # 3. The states.
+red: typing.Final = StateWithValue(ident='red', value=Outputs.RED)
+amber: typing.Final = StateWithValue(ident='amber', value=Outputs.AMBER)
+green: typing.Final = StateWithValue(ident='green', value=Outputs.GREEN)
+
+red.actions[Timeouts.RED_TIMEOUT] = green.action  # 4a. The *state* actions.
+green.actions[Timeouts.GREEN_TIMEOUT] = amber.action
+amber.actions[Timeouts.AMBER_TIMEOUT] = red.action
+
+with Machine(initial_state=red) as machine:  # 5. The machine.
+    machine.actions[Timeouts.RED_TIMEOUT] = flashing_red.action  # 4b. The *machine* actions.
+    machine.actions[Timeouts.AMBER_TIMEOUT] = flashing_red.action
+    machine.actions[Timeouts.GREEN_TIMEOUT] = flashing_red.action
+    machine.actions[Timeouts.ERROR] = flashing_red.action
+
+    assert machine.state is red
+    assert machine.fire(event=Timeouts.RED_TIMEOUT) is Outputs.GREEN  # 6. Fire events and obtain outputs.
+    assert machine.state is green
+    assert machine.fire(event=Timeouts.GREEN_TIMEOUT) is Outputs.AMBER
+    assert machine.state is amber
+    assert machine.fire(event=Timeouts.AMBER_TIMEOUT) is Outputs.RED
+    assert machine.state is red
+    assert machine.fire(event=Timeouts.AMBER_TIMEOUT) is Outputs.FLASHING_RED
+    assert machine.state is flashing_red
+    assert machine.fire(event=Timeouts.ERROR) is Outputs.FLASHING_RED
+    assert machine.state is flashing_red
 ```
 
 Note how the defining actions in this case are split between state actions, 4a, and machine actions, 4b,
