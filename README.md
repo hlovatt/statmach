@@ -1,6 +1,6 @@
 # statcon
 
-## Pythonic State Machine
+## Pythonic Finite State Machine
 
 State machines represent different states and the transition between states that have a repetitive sequence
 that is pre-determined.
