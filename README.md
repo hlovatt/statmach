@@ -182,7 +182,7 @@ The formal definition of a Mealy machine is a 5-tuple (S, S0, Σ, Λ, T) that co
   * A finite set called the input alphabet Σ.
     Inputs are unique objects, typically members of an enum.
   * A finite set called the output alphabet Λ.
-    The output is any type (generically typed).
+    The output is any type.
   * A combined transition and output function T : S × Σ → S × Λ.
     The transitions are actions on each state that are called when the corresponding event fires,
     the actions give the new state and new output.
