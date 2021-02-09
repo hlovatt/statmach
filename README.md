@@ -62,6 +62,13 @@ E.g. an edge detector
 (it detects when its input changes from 0 to 1 or vice versa and outputs a 1 if it does, otherwise a 0):
 
 ![Edge Detector State Diagram](media/EdgeDetectorStateDiagram.png)
+
+States are traditionally draw as circles and the initial state is marked with a double circle (shown in black).
+States traditionally have an identifier, because it is easier to follow what is happening if a state is uniquly identified.
+The identifiers are inside the circles representing the states.
+Actions are the arrows from one state to the next (shown in blue).
+Inputs that cause the action to be taken are above the line on the action annotation (shown in green).
+Outputs that result when the action is taken are below the line on the action annotation (shown in red).
     
 ```python
 Bit = enum.Enum('Bit', 'ZERO ONE')  # 1. & 2. Define the inputs (in this case also the outputs).
@@ -100,6 +107,14 @@ A more complicated example is a traffic light machine:
 
 ![Traffic Light State Diagram](media/TrafficLightStateDiagram.png)
     
+This state diagram has three features that are different than the edge detector diagram:
+
+  1. The output is ascotiated with the state not the action, i.e. all transition to a given state result in the same output.
+     This is denoted in the diagram by the below the line output shown on the state (in red) and not on the action annotation.
+  2. The machine has actions that are the default for all states, shown as a dotted line that does not originate from a state (shown in blue).
+     These machine actions are 'overriden' by state actions, hence there dotted nomenclature to indicate lesser.
+  3. There is no way out of state 'flashing_red' (it is a terminal failure) other than restarting the machine so that it goes back to 'red'.
+
 The traffic light example has two common requirements: the events arrive asynchronously and it is important (because it is safety critical)
 that all events are dealt with even if they arrive unexpectedly.
 For example if the traffic light is red and the amber timeout occurs, this is an error because the machine is waiting
