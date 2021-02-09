@@ -112,7 +112,7 @@ This state diagram has three features that are different than the edge detector 
   1. The output is ascotiated with the state not the action, i.e. all transition to a given state result in the same output.
      This is denoted in the diagram by the below the line output shown on the state (in red) and not on the action annotation.
   2. The machine has actions that are the default for all states, shown as a dotted line that does not originate from a state (shown in blue).
-     These machine actions are 'overriden' by state actions, hence there dotted nomenclature to indicate lesser.
+     These machine actions are 'overriden' by state actions, hence their dotted nomenclature to indicate lesser.
   3. There is no way out of state 'flashing_red' (it is a terminal failure) other than restarting the machine so that it goes back to 'red'.
 
 The traffic light example has two common requirements: the events arrive asynchronously and it is important (because it is safety critical)
