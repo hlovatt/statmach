@@ -24,7 +24,7 @@ At a top (most abstract) level state machines are easy to code, just:
      Again only practical up to a few 100.
   3. List the transitions from one state to the next in response to an event and at the same time give the new output.
   
-The above requirements are often represented as a state diagram, which is great to document code.
+The above requirements are often represented as a state diagram, which is great to document code (see example diagrams below).
 
 ### Terminology Used in this Module
 
