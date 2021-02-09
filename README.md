@@ -78,7 +78,7 @@ def edge_detector():
         assert machine.state is s_0
 ```
 
-Note how the startup is dealt with, initially outputting a 0 for either input
+Note how the startup is dealt with, initially outputting a 0 for either input.
 This special start up condition is achieved using a
 start up state that is not used again after the first event is fired.
 This unique startup state is a common feature of state space machines.
