@@ -119,6 +119,7 @@ class Timeouts(enum.Enum):  # 1. The inputs.
     AMBER_TIMEOUT = enum.auto()
     GREEN_TIMEOUT = enum.auto()
     ERROR = enum.auto()
+
 class Outputs(enum.Enum):  # 2. The outputs.
     RED = enum.auto()
     AMBER = enum.auto()
