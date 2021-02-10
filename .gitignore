@@ -1,2 +1,4 @@
 /.idea/
 /venv/
+/statmach_hlovatt.egg-info/
+/build/

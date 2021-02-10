@@ -10,13 +10,14 @@ def read_text(file_name: str):
 
 setuptools.setup(
     name='statmach-hlovatt',
-    version='0.0.0',
+    version='0.0.1',
     url=statmach.__repository__,
     license=read_text('LICENSE'),
     author=statmach.__author__,
     author_email='howard.lovatt@gmail.com',
     description=statmach.__description__,
-    long_description=read_text('README.md'),
+    # read_text('README.md') doesn't work because PyPi can't render README.md - PyPI bug.
+    long_description=f'See <{statmach.__repository__}> for detailed description.\n',  # read_text('README.md'),
     long_description_content_type='text/markdown',
     py_modules=['statmach'],
     platforms=['any'],

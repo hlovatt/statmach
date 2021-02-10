@@ -1,9 +1,18 @@
+"""Test code and examples for ``statmach``."""
+
 import enum
 
 import pytest
 
 from statmach import State, Machine, StateWithValue
+import statmach
 
+__author__ = statmach.__author__
+__copyright__ = statmach.__copyright__
+__license__ = statmach.__license__
+__repository__ = statmach.__repository__
+__description__ = "Test code and examples for ``statmach``."
+__version__ = "0.0.0"
 
 # TODO Expand test to include inner state.
 # TODO Check for faults at all levels.
