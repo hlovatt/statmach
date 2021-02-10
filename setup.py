@@ -9,9 +9,9 @@ def read_text(file_name: str):
 
 
 setuptools.setup(
-    name='statmech-hlovatt',
+    name='statmach-hlovatt',
     version='0.0.0',
-    url='https://github.com/hlovatt/statmech',
+    url=statmach.__repository__,
     license=read_text('LICENSE'),
     author=statmach.__author__,
     author_email='howard.lovatt@gmail.com',
