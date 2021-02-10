@@ -12,7 +12,7 @@ from statmach import State, Machine, StateWithValue
 # TODO Check that state acts like inner ``with``.
 # noinspection PyTypeChecker
 class TestSM:
-    def test_minimal_sm_that_does_nothing(self) -> None:
+    def test_minimal_sm_that_does_nothing(self):
         Events = enum.Enum('Events', 'MACHINE STATE')
         state0 = State()
         state0.actions[Events.STATE] = state0, None
@@ -25,7 +25,7 @@ class TestSM:
             assert machine.fire(event=Events.STATE) is None
             assert machine.state is state0
 
-    def test_edge_detector(self) -> None:
+    def test_edge_detector(self):
         """
         https://en.wikipedia.org/wiki/Mealy_machine
 
@@ -59,7 +59,7 @@ class TestSM:
             assert machine.state is s_0
 
     # noinspection PyArgumentList
-    def test_traffic_lights(self) -> None:
+    def test_traffic_lights(self):
         """
         .. image:: media/TrafficLightStateDiagram.png
         """
@@ -103,7 +103,7 @@ class TestSM:
             assert machine.fire(event=Timeouts.ERROR) is Outputs.FLASHING_RED
             assert machine.state is flashing_red
 
-    # def test_nested_state_machines(self) -> None:
+    # def test_nested_state_machines(self):
     #     Events: typing.Final = statmach.Event('Events', 'TO_OUTER_0 TO_OUTER_1 TO_INNER_0 TO_INNER_1')
     #     outer_0: typing.Final = statmach.State()
     #     outer_1: typing.Final = statmach.State()
@@ -128,7 +128,7 @@ class TestSM:
     #         machine.fire(event=Events.MACHINE_TO_STATE_0)
     #         assert machine.state is states[0]
 
-    def test_transitioning_between_states_and_enter_and_exit_overrides(self) -> None:
+    def test_transitioning_between_states_and_enter_and_exit_overrides(self):
         log = []
 
         Events = enum.Enum('Events', 'MACHINE_TO_STATE_0 STATE_TO_STATE_1')
@@ -180,7 +180,7 @@ class TestSM:
             'Exit Machine',
         ]
 
-    def test_that_unhandled_event_gets_raised(self) -> None:
+    def test_that_unhandled_event_gets_raised(self):
         Events = enum.Enum('Events', 'UNHANDLED')
         state0 = State()
         with Machine(initial_state=state0) as machine:
@@ -189,7 +189,7 @@ class TestSM:
                 machine.fire(event=Events.UNHANDLED)
             assert machine.state is state0
 
-    def test_that_exception_can_be_suppressed(self) -> None:
+    def test_that_exception_can_be_suppressed(self):
         Events = enum.Enum('Events', 'UNHANDLED')
 
         class SuppressAllExceptions(State):
