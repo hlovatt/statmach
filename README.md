@@ -1,4 +1,4 @@
-# statmech
+# statmach
 
 ## Pythonic Finite State Machine
 
@@ -39,10 +39,10 @@ which helpful to document code (see example diagrams below).
 The code is written in Python 3.5 and is designed run on 
 [MicroPython](https://micropython.org) 
 (making it suitable for real hardware) as well as desktop (normal) Python.
-All the code is in one small file (``statmech.py``).
+All the code is in one small file (``statmach.py``).
 
-  1. pip install --update statmech
-  2. Copy ``statmech.py`` into your project.
+  1. pip install --upgrade statmach
+  2. Copy ``statmach.py`` into your project.
 
 ### Terminology Used in this Module
 
@@ -88,7 +88,7 @@ action annotation (shown in red).
     
 ```python
 from enum import Enum
-from statmech import  State, Machine
+from statmach import  State, Machine
 
 Bit = Enum('Bit', 'ZERO ONE')  # 1. & 2. Define the inputs (in this case also the outputs).
 
@@ -162,7 +162,7 @@ easier to follow.
 
 ```python
 from enum import Enum, auto
-from statmech import  StateWithValue, Machine
+from statmach import  StateWithValue, Machine
 
 class Timeouts(Enum):  # 1. The inputs.
     RED_TIMEOUT = auto()
