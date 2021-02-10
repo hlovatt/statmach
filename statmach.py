@@ -10,7 +10,7 @@ __author__ = "Howard C Lovatt"
 __copyright__ = "Howard C Lovatt, 2021 onwards."
 __license__ = "MIT https://opensource.org/licenses/MIT."
 __repository__ = "https://github.com/hlovatt/statmech"
-__description__ = ""
+__description__ = "Pythonic Finite State Machine with both action outputs (Mearly) and state outputs (Moore)"
 __version__ = "0.0.0"
 
 import sys
