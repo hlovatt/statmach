@@ -12,7 +12,7 @@ __copyright__ = statmach.__copyright__
 __license__ = statmach.__license__
 __repository__ = statmach.__repository__
 __description__ = "Test code and examples for ``statmach``."
-__version__ = "0.0.1"  # Version set by https://github.com/hlovatt/tag2ver
+__version__ = "0.0.2"  # Version set by https://github.com/hlovatt/tag2ver
 
 # TODO Expand test to include inner state.
 # TODO Check for faults at all levels.
