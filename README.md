@@ -42,7 +42,8 @@ The code is written in Python 3.5 and is designed run on
 All the code is in one small file (``statmach.py``).
 
   1. pip install --upgrade statmach
-  2. Copy ``statmach.py`` into your project.
+  2. Copy ``statmach.py`` into your project
+     (probably needed for a Micropython project - IDE dependent).
 
 ### Terminology Used in this Module
 
@@ -164,7 +165,7 @@ easier to follow.
 from enum import Enum, auto
 from statmach import  StateWithValue, Machine
 
-class Timeouts(Enum):  # 1. The inputs.
+class Inputs(Enum):  # 1. The inputs.
     RED_TIMEOUT = auto()
     AMBER_TIMEOUT = auto()
     GREEN_TIMEOUT = auto()
@@ -181,26 +182,26 @@ red = StateWithValue(ident='red', value=Outputs.RED)
 amber = StateWithValue(ident='amber', value=Outputs.AMBER)
 green = StateWithValue(ident='green', value=Outputs.GREEN)
 
-red.actions[Timeouts.RED_TIMEOUT] = green.action  # 4a. The *state* actions.
-green.actions[Timeouts.GREEN_TIMEOUT] = amber.action
-amber.actions[Timeouts.AMBER_TIMEOUT] = red.action
+red.actions[Inputs.RED_TIMEOUT] = green.action  # 4a. The *state* actions.
+green.actions[Inputs.GREEN_TIMEOUT] = amber.action
+amber.actions[Inputs.AMBER_TIMEOUT] = red.action
 
 with Machine(initial_state=red) as machine:  # 5. The machine.
-    machine.actions[Timeouts.RED_TIMEOUT] = flashing_red.action  # 4b. The *machine* actions.
-    machine.actions[Timeouts.AMBER_TIMEOUT] = flashing_red.action
-    machine.actions[Timeouts.GREEN_TIMEOUT] = flashing_red.action
-    machine.actions[Timeouts.ERROR] = flashing_red.action
+    machine.actions[Inputs.RED_TIMEOUT] = flashing_red.action  # 4b. The *machine* actions.
+    machine.actions[Inputs.AMBER_TIMEOUT] = flashing_red.action
+    machine.actions[Inputs.GREEN_TIMEOUT] = flashing_red.action
+    machine.actions[Inputs.ERROR] = flashing_red.action
 
     assert machine.state is red
-    assert machine.fire(event=Timeouts.RED_TIMEOUT) is Outputs.GREEN  # 6. Fire events and obtain outputs.
+    assert machine.fire(event=Inputs.RED_TIMEOUT) is Outputs.GREEN  # 6. Fire events and obtain outputs.
     assert machine.state is green
-    assert machine.fire(event=Timeouts.GREEN_TIMEOUT) is Outputs.AMBER
+    assert machine.fire(event=Inputs.GREEN_TIMEOUT) is Outputs.AMBER
     assert machine.state is amber
-    assert machine.fire(event=Timeouts.AMBER_TIMEOUT) is Outputs.RED
+    assert machine.fire(event=Inputs.AMBER_TIMEOUT) is Outputs.RED
     assert machine.state is red
-    assert machine.fire(event=Timeouts.AMBER_TIMEOUT) is Outputs.FLASHING_RED
+    assert machine.fire(event=Inputs.AMBER_TIMEOUT) is Outputs.FLASHING_RED
     assert machine.state is flashing_red
-    assert machine.fire(event=Timeouts.ERROR) is Outputs.FLASHING_RED
+    assert machine.fire(event=Inputs.ERROR) is Outputs.FLASHING_RED
     assert machine.state is flashing_red
 ```
 
@@ -212,6 +213,112 @@ The traffic light machine is an example of a state machine that has an output
 associated with each state,
 these are called Moore Machines (see below), and they use the class 
 ``StateWithValue`` to define their states.
+
+The traffic light example can be run on real hardware, 
+for example a [PyBoard](https://store.micropython.org/product/PYBv1.1H).
+The complete project is on 
+[Github](https://github.com/hlovatt/upythonstatmachex/tree/master).
+The code is below and is an example of a third type of state machine, 
+one were the output is a side effect of enetering and leaving the states
+(it is therefore a variation on a Moore Machine).
+In particular the ``__entry__`` and ``__exit__`` methods affect control the outputs:
+
+```python
+from statmach import State, Machine
+from pyb import LED, Timer, wfi, Switch
+from micropython import alloc_emergency_exception_buf, schedule
+
+alloc_emergency_exception_buf(200)
+
+
+def main():
+    print('Traffic lights running ...')
+
+    class Events:
+        RED_TIMEOUT = 1
+        AMBER_TIMEOUT = 2
+        GREEN_TIMEOUT = 3
+        ERROR = 4
+        START = 5
+
+    start = State(ident='start')  # Special start state to allow for initialization before operation.
+
+    timer0 = 10
+
+    class FlashingRed(State):  # Special fault state that should never exit.
+        def __init__(self):
+            super().__init__(ident='error')
+            self.timer = Timer(timer0 + 4)
+            self.led = LED(1)
+
+            # noinspection PyUnusedLocal
+            def toggle_with_arg(not_used):  # Toggle func that accepts an arg, because ``schedule`` *needs* an arg.
+                self.led.toggle()
+
+            self.led_tog_ref = toggle_with_arg  # Store the function reference locally to avoid allocation in interrupt.
+
+        def __enter__(self):
+            self.timer.init(freq=2, callback=lambda _: schedule(self.led_tog_ref, None))
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self.led.off()
+            self.timer.deinit()
+
+    flashing_red = FlashingRed()
+
+    traffic_lights = Machine(initial_state=start)  # The traffic light machine.
+    traffic_lights.actions[Events.RED_TIMEOUT] = (flashing_red, None)  # Catch anything unexpected.
+    traffic_lights.actions[Events.AMBER_TIMEOUT] = (flashing_red, None)
+    traffic_lights.actions[Events.GREEN_TIMEOUT] = (flashing_red, None)
+    traffic_lights.actions[Events.ERROR] = (flashing_red, None)
+    traffic_lights.actions[Events.START] = (flashing_red, None)
+
+    tl_fire_ref = traffic_lights.fire  # Store the function reference locally to avoid allocation in interrupt.
+    error = Switch()
+    error.callback(lambda: schedule(tl_fire_ref, Events.ERROR))
+
+    class LEDState(State):  # Output is determined by ``__enter__`` and ``__exit__`` (common in embedded machines).
+        def __init__(self, led_num, time_on, event):
+            super().__init__(ident=led_num)  # Use the LED num as the ident.
+            self.led = LED(self.ident)  # The LED to use.
+            self.timer = Timer(timer0 + self.ident)  # The timer to use.
+            self.timeout = time_on  # Time to wait before firing event.
+            self.event = event  # Event to fire at end of time_on.
+
+        def __enter__(self):
+            self.led.on()
+            self.timer.init(freq=1 / self.timeout, callback=lambda _: schedule(tl_fire_ref, self.event))
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            self.led.off()
+            self.timer.deinit()
+            return False
+
+    red = LEDState(led_num=1, time_on=3, event=Events.RED_TIMEOUT)
+    green = LEDState(led_num=2, time_on=3, event=Events.GREEN_TIMEOUT)
+    amber = LEDState(led_num=3, time_on=0.5, event=Events.AMBER_TIMEOUT)
+
+    red.actions[Events.RED_TIMEOUT] = (green, None)
+    green.actions[Events.GREEN_TIMEOUT] = (amber, None)
+    amber.actions[Events.AMBER_TIMEOUT] = (red, None)
+    start.actions[Events.START] = (red, None)
+
+    with traffic_lights:
+        _ = traffic_lights.fire(event=Events.START)  # Start the machine once all the setup is complete.
+        while True:  # Keep running timers (and other peripherals), but otherwise do nothing.
+            wfi()
+```
+
+The Micropython code is as for the desktop Python code above for,
+except that the output occurs in the ``__entry__`` and ``__exit__`` methods.
+In particular these methods start and stop timers and turn LEDs on and off.
+The timers in turn schedule events to fire when they timeout.
+A further difference between the Micropython and desktop code
+is that the Micropython code has a start state, this state is to allow the
+state machine to be initialized before it is started 
+(which is common for state machines)
 
 For more state machine examples see ``test_statmach.py``.
 

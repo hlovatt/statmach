@@ -12,7 +12,8 @@ __copyright__ = statmach.__copyright__
 __license__ = statmach.__license__
 __repository__ = statmach.__repository__
 __description__ = "Test code and examples for ``statmach``."
-__version__ = "0.0.2"  # Version set by https://github.com/hlovatt/tag2ver
+__version__ = "0.0.3"  # Version set by https://github.com/hlovatt/tag2ver
+
 
 # TODO Expand test to include inner state.
 # TODO Check for faults at all levels.
@@ -23,22 +24,22 @@ __version__ = "0.0.2"  # Version set by https://github.com/hlovatt/tag2ver
 class TestSM:
     def test_minimal_sm_that_does_nothing(self):
         Events = enum.Enum('Events', 'MACHINE STATE')
-        state0 = State()
-        state0.actions[Events.STATE] = state0, None
-        with Machine(initial_state=state0) as machine:
-            machine.actions[Events.MACHINE] = state0, None
+        s0 = State()
+        s0.actions[Events.STATE] = s0, None
+        with Machine(initial_state=s0) as machine:
+            machine.actions[Events.MACHINE] = s0, None
 
-            assert machine.state is state0
-            assert machine.fire(event=Events.MACHINE) is None
-            assert machine.state is state0
-            assert machine.fire(event=Events.STATE) is None
-            assert machine.state is state0
+            assert machine.state is s0
+            assert machine.fire(Events.MACHINE) is None
+            assert machine.state is s0
+            assert machine.fire(Events.STATE) is None
+            assert machine.state is s0
 
     def test_edge_detector(self):
         """
         https://en.wikipedia.org/wiki/Mealy_machine
 
-        .. image:: file:://media/EdgeDetectorStateDiagram.png
+        .. image:: media/EdgeDetectorStateDiagram.png
             :alt: Edge Detector State Diagram
             :width: 864px
             :height: 720px
@@ -56,15 +57,15 @@ class TestSM:
 
         with Machine(initial_state=s_i) as machine:  # 5. Define the machine.
             assert machine.state is s_i
-            assert machine.fire(event=Bit.ZERO) is Bit.ZERO  # 6. Fire events and obtain outputs.
+            assert machine.fire(Bit.ZERO) is Bit.ZERO  # 6. Fire events and obtain outputs.
             assert machine.state is s_0
-            assert machine.fire(event=Bit.ZERO) is Bit.ZERO
+            assert machine.fire(Bit.ZERO) is Bit.ZERO
             assert machine.state is s_0
-            assert machine.fire(event=Bit.ONE) is Bit.ONE
+            assert machine.fire(Bit.ONE) is Bit.ONE
             assert machine.state is s_1
-            assert machine.fire(event=Bit.ONE) is Bit.ZERO
+            assert machine.fire(Bit.ONE) is Bit.ZERO
             assert machine.state is s_1
-            assert machine.fire(event=Bit.ZERO) is Bit.ONE
+            assert machine.fire(Bit.ZERO) is Bit.ONE
             assert machine.state is s_0
 
     # noinspection PyArgumentList
@@ -73,7 +74,7 @@ class TestSM:
         .. image:: media/TrafficLightStateDiagram.png
         """
 
-        class Timeouts(enum.Enum):  # 1. The inputs.
+        class Inputs(enum.Enum):  # 1. The inputs.
             RED_TIMEOUT = enum.auto()
             AMBER_TIMEOUT = enum.auto()
             GREEN_TIMEOUT = enum.auto()
@@ -90,26 +91,26 @@ class TestSM:
         amber = StateWithValue(ident='amber', value=Outputs.AMBER)
         green = StateWithValue(ident='green', value=Outputs.GREEN)
 
-        red.actions[Timeouts.RED_TIMEOUT] = green.action  # 4a. The *state* actions.
-        green.actions[Timeouts.GREEN_TIMEOUT] = amber.action
-        amber.actions[Timeouts.AMBER_TIMEOUT] = red.action
+        red.actions[Inputs.RED_TIMEOUT] = green.action  # 4a. The *state* actions.
+        green.actions[Inputs.GREEN_TIMEOUT] = amber.action
+        amber.actions[Inputs.AMBER_TIMEOUT] = red.action
 
         with Machine(initial_state=red) as machine:  # 5. The machine.
-            machine.actions[Timeouts.RED_TIMEOUT] = flashing_red.action  # 4b. The *machine* actions.
-            machine.actions[Timeouts.AMBER_TIMEOUT] = flashing_red.action
-            machine.actions[Timeouts.GREEN_TIMEOUT] = flashing_red.action
-            machine.actions[Timeouts.ERROR] = flashing_red.action
+            machine.actions[Inputs.RED_TIMEOUT] = flashing_red.action  # 4b. The *machine* actions.
+            machine.actions[Inputs.AMBER_TIMEOUT] = flashing_red.action
+            machine.actions[Inputs.GREEN_TIMEOUT] = flashing_red.action
+            machine.actions[Inputs.ERROR] = flashing_red.action
 
             assert machine.state is red
-            assert machine.fire(event=Timeouts.RED_TIMEOUT) is Outputs.GREEN  # 6. Fire events and obtain outputs.
+            assert machine.fire(Inputs.RED_TIMEOUT) is Outputs.GREEN  # 6. Fire events and obtain outputs.
             assert machine.state is green
-            assert machine.fire(event=Timeouts.GREEN_TIMEOUT) is Outputs.AMBER
+            assert machine.fire(Inputs.GREEN_TIMEOUT) is Outputs.AMBER
             assert machine.state is amber
-            assert machine.fire(event=Timeouts.AMBER_TIMEOUT) is Outputs.RED
+            assert machine.fire(Inputs.AMBER_TIMEOUT) is Outputs.RED
             assert machine.state is red
-            assert machine.fire(event=Timeouts.AMBER_TIMEOUT) is Outputs.FLASHING_RED
+            assert machine.fire(Inputs.AMBER_TIMEOUT) is Outputs.FLASHING_RED
             assert machine.state is flashing_red
-            assert machine.fire(event=Timeouts.ERROR) is Outputs.FLASHING_RED
+            assert machine.fire(Inputs.ERROR) is Outputs.FLASHING_RED
             assert machine.state is flashing_red
 
     # def test_nested_state_machines(self):
@@ -170,13 +171,13 @@ class TestSM:
             machine.actions[Events.MACHINE_TO_STATE_0] = states[0], None
 
             assert machine.state is states[0]
-            assert machine.fire(event=Events.MACHINE_TO_STATE_0) is None
+            assert machine.fire(Events.MACHINE_TO_STATE_0) is None
             assert machine.state is states[0]
-            assert machine.fire(event=Events.STATE_TO_STATE_1) is None
+            assert machine.fire(Events.STATE_TO_STATE_1) is None
             assert machine.state is states[1]
-            assert machine.fire(event=Events.STATE_TO_STATE_1) is None
+            assert machine.fire(Events.STATE_TO_STATE_1) is None
             assert machine.state is states[1]
-            assert machine.fire(event=Events.MACHINE_TO_STATE_0) is None
+            assert machine.fire(Events.MACHINE_TO_STATE_0) is None
             assert machine.state is states[0]
 
         assert log == [
@@ -195,7 +196,7 @@ class TestSM:
         with Machine(initial_state=state0) as machine:
             assert machine.state is state0
             with pytest.raises(KeyError):
-                machine.fire(event=Events.UNHANDLED)
+                machine.fire(Events.UNHANDLED)
             assert machine.state is state0
 
     def test_that_exception_can_be_suppressed(self):
@@ -208,5 +209,5 @@ class TestSM:
         state0 = SuppressAllExceptions()
         with Machine(initial_state=state0) as machine:
             assert machine.state is state0
-            assert machine.fire(event=Events.UNHANDLED) is None
+            assert machine.fire(Events.UNHANDLED) is None
             assert machine.state is state0

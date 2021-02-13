@@ -11,7 +11,7 @@ __copyright__ = "Howard C Lovatt, 2021 onwards."
 __license__ = "MIT https://opensource.org/licenses/MIT."
 __repository__ = "https://github.com/hlovatt/statmech"
 __description__ = "Pythonic Finite State Machine with both action outputs (Mearly) and state outputs (Moore)"
-__version__ = "0.0.2"  # Version set by https://github.com/hlovatt/tag2ver
+__version__ = "0.0.3"  # Version set by https://github.com/hlovatt/tag2ver
 
 import sys
 
@@ -121,7 +121,7 @@ class StateWithValue(State):
 class Machine(State):
     """The state machine itself, which is also a state so that machines can be nested."""
 
-    def __init__(self, *, initial_state, ident=None):
+    def __init__(self, *, ident=None, initial_state):
         """
         Creates a state machine with an initial state and an optional identifier.
 
@@ -137,7 +137,7 @@ class Machine(State):
         self.state = enter(initial_state)
         """The current state."""
 
-    def fire(self, *, event):
+    def fire(self, event):
         """
         Fire the given event off and return the new value of the state machine.
 
@@ -156,9 +156,13 @@ class Machine(State):
             machine_actions = self.actions
             state_actions = state.actions
             new_state, new_value = state_actions[event] if event in state_actions.keys() else machine_actions[event]
-        except:
-            if not state.__exit__(*sys.exc_info()):
-                raise
+        except BaseException as e:
+            if sys.implementation.name == 'micropython':  # Micropython has reduced exception capability.
+                if not state.__exit__(None, e, None):
+                    raise e
+            else:
+                if not state.__exit__(*sys.exc_info()):
+                    raise e
             new_state = state  # ``__exit__`` has dealt with the exception, therefore continue in current state.
 
         if new_state is not state:
@@ -177,7 +181,7 @@ class Machine(State):
 class MachineWithValue(Machine):
     """The state machine itself, which is also a state so that machines can be nested and has an associated value."""
 
-    def __init__(self, *, initial_state, ident=None, value=None):
+    def __init__(self, ident=None, *, initial_state, value=None):
         """
         Creates a state machine with an initial state, an optional identifier, and optional value.
 
@@ -186,7 +190,7 @@ class MachineWithValue(Machine):
         :param value: optional value for the machine.
         """
 
-        super().__init__(initial_state=initial_state, ident=ident)
+        super().__init__(ident=ident, initial_state=initial_state)
         self.value = value
         """The value of the machine (defaults to ``None``)."""
 
@@ -200,16 +204,16 @@ def _main():
     class Events:
         MACHINE = 1
         STATE = 2
-    state0 = State()
-    state0.actions[Events.STATE] = state0, None
-    with Machine(initial_state=state0) as machine:
-        machine.actions[Events.MACHINE] = state0, None
+    s0 = State()
+    s0.actions[Events.STATE] = s0, None
+    with Machine(initial_state=s0) as machine:
+        machine.actions[Events.MACHINE] = s0, None
 
-        assert machine.state is state0
-        assert machine.fire(event=Events.MACHINE) is None
-        assert machine.state is state0
-        assert machine.fire(event=Events.STATE) is None
-        assert machine.state is state0
+        assert machine.state is s0
+        assert machine.fire(Events.MACHINE) is None
+        assert machine.state is s0
+        assert machine.fire(Events.STATE) is None
+        assert machine.state is s0
 
 
 if __name__ == '__main__':
