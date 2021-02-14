@@ -4,14 +4,12 @@ statmech: Pythonic Finite State Machine
 See ``__description__`` below or (better) ``README.md`` file in ``__repository__`` for more info.
 """
 
-# TODO Document micropython
-
 __author__ = "Howard C Lovatt"
 __copyright__ = "Howard C Lovatt, 2021 onwards."
 __license__ = "MIT https://opensource.org/licenses/MIT."
 __repository__ = "https://github.com/hlovatt/statmech"
 __description__ = "Pythonic Finite State Machine with both action outputs (Mearly) and state outputs (Moore)"
-__version__ = "0.0.3"  # Version set by https://github.com/hlovatt/tag2ver
+__version__ = "0.0.4"  # Version set by https://github.com/hlovatt/tag2ver
 
 import sys
 
@@ -21,7 +19,7 @@ class State:
     A state with an optional ``ident`` and with ``actions``.
     """
 
-    def __init__(self, *, ident=None):
+    def __init__(self, ident=None):
         """
         Creates a state that has an optional identifier.
 
@@ -47,7 +45,7 @@ class State:
         """
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         """
         Called on exit of the state (exit for any reason including an exception).
         By default, does nothing and returns false.
@@ -62,8 +60,8 @@ class State:
         state machine does *not* change and that the state machine continues to operate.
 
         :param exc_type: the type of the exception or ``None`` if no exception occurred.
-        :param exc_value: the exception or ``None`` if no exception occurred.
-        :param traceback: the stack trace for the exception or ``None`` if no exception occurred.
+        :param exc_val: the exception or ``None`` if no exception occurred.
+        :param exc_tb: the stack trace for the exception or ``None`` if no exception occurred.
         :returns: if called *due* to an exception, indicates if the state machine is to continue in the
                   current state (true) or rethrow the exception (false).
         """
@@ -76,7 +74,7 @@ class State:
 
 class StateWithValue(State):
     """
-    Represents a ``State`` which has an output value associated with the state
+    A ``State`` which has an output value associated with the state
     (as opposed to associated with the action),
     an optional ``ident``, and ``actions``.
 
@@ -90,12 +88,12 @@ class StateWithValue(State):
     https://en.wikipedia.org/wiki/Moore_machine.
     """
 
-    def __init__(self, *, ident=None, value=None):
+    def __init__(self, *, ident=None, value):
         """
-        Creates a state that has an optional identifier and an optional value.
+        Create a state that has an optional identifier and an optional value.
 
         :param ident: optional identifier for the state.
-        :param value: optional value for the state.
+        :param value: value for the state.
         """
         super().__init__(ident=ident)
         self.value = value
@@ -106,7 +104,7 @@ class StateWithValue(State):
         """
         The action associated with transitioning to this state.
 
-        :return: the action tuple of ``(self, self.value)``.
+        :return: action tuple of ``(self, self.value)``.
         """
         return self, self.value
 
@@ -119,29 +117,54 @@ class StateWithValue(State):
 #      a second warning option for if both machine and state have same event.
 #      Needs an events property that returns super set of events in the machine and its state.
 class Machine(State):
-    """The state machine itself, which is also a state so that machines can be nested."""
+    """
+    State machine itself, which is also a state so that machines can be nested.
+
+    If ``__exit__`` is overridden in a derived class then
+    must call ``super().__exit__(exc_type, exc_val, exc_tb)`` in a ``try`` block at start of new ``__exit__``
+    to ensure that current state is correctly exited, e.g.:
+
+    ```python
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            _ = super().__exit__(None, None, None)
+        finally:
+            <exit actions>
+        return False
+    ```
+
+    """
 
     def __init__(self, *, ident=None, initial_state):
         """
-        Creates a state machine with an initial state and an optional identifier.
+        Create a state machine with an initial state and an optional identifier.
 
-        :param initial_state: initial state of the machine.
         :param ident: optional identifier for the machine.
+        :param initial_state: initial state of the machine.
+        :throws AssertionError: if initial state is ``None``.
         """
+        assert initial_state is not None
 
         super().__init__(ident=ident)
 
-        # See https://docs.python.org/3/reference/compound_stmts.html#with for how `with` works.
-        enter = type(initial_state).__enter__  # Check that ``__enter__`` and ``__exit__`` exist.
-        _ = type(initial_state).__exit__
-        self.state = enter(initial_state)
-        """The current state."""
+        self._state = initial_state
+        """The current state (private var)."""
+
+        self._new_machine = True
+        """True when machine is new and no events have fired as yet (private var)."""
+
+    @property
+    def state(self):
+        """Current state."""
+        return self._state
 
     def fire(self, event):
         """
         Fire the given event off and return the new value of the state machine.
 
-        Obtains the action tuple associated with the event on the current state and
+        If it is the 1st firing on a new machine then the ``initial_state`` is entered before firing.
+
+        The firing obtains the action tuple (new state, new value) associated with the event on the current state and
         if the new state in the tuple is different than the current state
         then exit the current state and enter the new state.
 
@@ -149,39 +172,90 @@ class Machine(State):
         :returns: the new value of the state machine.
         """
         # See https://docs.python.org/3/reference/compound_stmts.html#with for how ``with`` works.
-        state = self.state
+
+        if self._new_machine:  # Enter the initial state of the newly created machine.
+            self._new_machine = False
+            enter = type(self._state).__enter__  # Check that ``__enter__`` and ``__exit__`` exist.
+            _ = type(self._state).__exit__
+            self._state = enter(self._state)
+
+        current_state = self._state
+
         new_value = None
         # noinspection PyBroadException
         try:
             machine_actions = self.actions
-            state_actions = state.actions
+            state_actions = current_state.actions
             new_state, new_value = state_actions[event] if event in state_actions.keys() else machine_actions[event]
         except BaseException as e:
             if sys.implementation.name == 'micropython':  # Micropython has reduced exception capability.
-                if not state.__exit__(None, e, None):
+                if not current_state.__exit__(type(e), e, None):
+                    self._state = None  # None indicates that __exit__ already called.
                     raise e
             else:
-                if not state.__exit__(*sys.exc_info()):
+                if not current_state.__exit__(*sys.exc_info()):
+                    self._state = None  # None indicates that __exit__ already called.
                     raise e
-            new_state = state  # ``__exit__`` has dealt with the exception, therefore continue in current state.
+            new_state = current_state  # ``__exit__`` has dealt with the exception, therefore continue in current state.
 
-        if new_state is not state:
-            _ = state.__exit__(None, None, None)
+        if new_state is not current_state:
+            _ = current_state.__exit__(None, None, None)
             enter = type(new_state).__enter__  # Check that ``__enter__`` and ``__exit__`` exist.
             _ = type(new_state).__exit__
-            self.state = enter(new_state)
+            self._state = enter(new_state)
 
         return new_value
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Called on exit of the machine (exit for any reason including an exception).
+        By default, exits the current state (if there is one) and returns false.
+
+        If ``__exit__`` was called due to a *normal* exit (*not* due to an exception) then
+        the returned value is ignored.
+
+        If ``__exit__`` was called *due* to an exception then the returned bool indicates if
+        the exception should be swallowed (true) or not (false).
+        If ``__exit__`` has dealt with the exception, it should return true (swallow exception).
+        Swallowing the exception means that the current state of the enclosing
+        state machine does *not* change and that the state machine continues to operate.
+
+        If ``__exit__`` is overridden in a derived class then
+        must call ``super().__exit__(exc_type, exc_val, exc_tb)`` in a ``try`` block at start of new ``__exit__``
+        to ensure that current state is correctly exited, e.g.:
+
+        ```python
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            try:
+                _ = super().__exit__(None, None, None)
+            finally:
+                <exit actions>
+            return False
+        ```
+
+        :param exc_type: the type of the exception or ``None`` if no exception occurred.
+        :param exc_val: the exception or ``None`` if no exception occurred.
+        :param exc_tb: the stack trace for the exception or ``None`` if no exception occurred.
+        :returns: if called *due* to an exception, indicates if the enclosing state machine is to continue in the
+                  current state (true) or rethrow the exception (false) or if enclosed by a ``with`` statement
+                  if that statement is to swallow the exception (true) or rethrow the exception (false).
+        """
+        if self._state is not None and not self._new_machine:
+            # If it is a new `machine that hasn't entered the initial state then don't exit initial state.
+            # Since state is not ``None``, it is an exit from a ``with`` statement.
+            _ = self._state.__exit__(None, None, None)
+        return False
 
     def __repr__(self):
         """String representation in same form as the constructor, but using the current state for the initial state."""
         return 'Machine(initial_state={}, ident={})'.format(self.state, self.ident)
 
 
+# TODO Make MachineWithValue inherit StateWithValue so that can be used as type or with instance of test.
 class MachineWithValue(Machine):
     """The state machine itself, which is also a state so that machines can be nested and has an associated value."""
 
-    def __init__(self, ident=None, *, initial_state, value=None):
+    def __init__(self, *, ident=None, initial_state, value=None):
         """
         Creates a state machine with an initial state, an optional identifier, and optional value.
 
@@ -196,7 +270,7 @@ class MachineWithValue(Machine):
 
     def __repr__(self):
         """String representation in same form as the constructor, but using the current state for the initial state."""
-        return 'MachineWithValue(initial_state={}, ident={}, value={})'.format(self.state, self.ident, self.value)
+        return 'MachineWithValue(ident={}, initial_state={}, value={})'.format(self.ident, self.state, self.value)
 
 
 def _main():

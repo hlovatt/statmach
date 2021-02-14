@@ -219,7 +219,7 @@ for example a [PyBoard](https://store.micropython.org/product/PYBv1.1H).
 The complete project is on 
 [Github](https://github.com/hlovatt/upythonstatmachex/tree/master).
 The code is below and is an example of a third type of state machine, 
-one were the output is a side effect of enetering and leaving the states
+one were the output is a side effect of entering and leaving the states
 (it is therefore a variation on a Moore Machine).
 In particular the ``__entry__`` and ``__exit__`` methods affect control the outputs:
 
@@ -315,10 +315,12 @@ The Micropython code is as for the desktop Python code above for,
 except that the output occurs in the ``__entry__`` and ``__exit__`` methods.
 In particular these methods start and stop timers and turn LEDs on and off.
 The timers in turn schedule events to fire when they timeout.
+The ``usr`` switch on the PyBoard board is used to simulate a fault.
+
 A further difference between the Micropython and desktop code
 is that the Micropython code has a start state, this state is to allow the
 state machine to be initialized before it is started 
-(which is common for state machines)
+(which is common for state machines).
 
 For more state machine examples see ``test_statmach.py``.
 
