@@ -4,7 +4,7 @@ import enum
 
 import pytest
 
-from statmach import State, Machine, StateWithValue
+from statmach import State, Machine
 import statmach
 
 __author__ = statmach.__author__
@@ -12,7 +12,7 @@ __copyright__ = statmach.__copyright__
 __license__ = statmach.__license__
 __repository__ = statmach.__repository__
 __description__ = "Test code and examples for ``statmach``."
-__version__ = "0.0.5"  # Version set by https://github.com/hlovatt/tag2ver
+__version__ = "1.0.0"  # Version set by https://github.com/hlovatt/tag2ver
 
 log = []
 
@@ -50,7 +50,7 @@ class LoggingMachine(Machine):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         try:
-            _ = super().__exit__(exc_type, exc_val, exc_tb)
+            _ = super().__exit__(None, None, None)  # Exception from super `__exit__` is propagated (do not catch).
         finally:
             log.append(f'Exit machine')
             if self.exit_throws:
@@ -58,10 +58,8 @@ class LoggingMachine(Machine):
         return False
 
 
-# TODO Expand test to include machine as a state.
-# TODO Can uPython code terminate on ^C? Is this a good idea or is it better to allow code to continue to run.
 # noinspection PyTypeChecker
-class TestSM:
+class Test_statmach:
     # noinspection PyMethodMayBeStatic
     def setup_method(self):
         global log
@@ -131,10 +129,10 @@ class TestSM:
             GREEN = enum.auto()
             FLASHING_RED = enum.auto()
 
-        flashing_red = StateWithValue(ident='flashing_red', value=Outputs.FLASHING_RED)  # 3. The states.
-        red = StateWithValue(ident='red', value=Outputs.RED)
-        amber = StateWithValue(ident='amber', value=Outputs.AMBER)
-        green = StateWithValue(ident='green', value=Outputs.GREEN)
+        flashing_red = State(ident='flashing_red', value=Outputs.FLASHING_RED)  # 3. The states.
+        red = State(ident='red', value=Outputs.RED)
+        amber = State(ident='amber', value=Outputs.AMBER)
+        green = State(ident='green', value=Outputs.GREEN)
 
         red.actions[Inputs.RED_TIMEOUT] = green.action  # 4a. The *state* actions.
         green.actions[Inputs.GREEN_TIMEOUT] = amber.action
@@ -300,3 +298,17 @@ class TestSM:
             'Exit state 0',
             'Exit machine',
         ]
+
+    def test_new_state_handles_less_events(self):
+        Events = enum.Enum('Events', 's0 s1')
+        s0 = State()
+        s1 = State()
+        s0.actions = {Events.s0: s0.action, Events.s1: s1.action}
+        s1.actions = {Events.s0: s0.action}  # Missing `s1`.
+        with pytest.raises(AssertionError, match=(
+                'Set of current events handled, {<Events.s1: 2>, <Events.s0: 1>},'
+                ' not the same as set of new events, {<Events.s0: 1>}'
+            )
+        ):
+            with Machine(initial_state=s0) as m:
+                m.fire(Events.s1)

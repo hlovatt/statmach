@@ -163,7 +163,7 @@ easier to follow.
 
 ```python
 from enum import Enum, auto
-from statmach import  StateWithValue, Machine
+from statmach import  State, Machine
 
 class Inputs(Enum):  # 1. The inputs.
     RED_TIMEOUT = auto()
@@ -177,10 +177,10 @@ class Outputs(Enum):  # 2. The outputs.
     GREEN = auto()
     FLASHING_RED = auto()
 
-flashing_red = StateWithValue(ident='flashing_red', value=Outputs.FLASHING_RED)  # 3. The states.
-red = StateWithValue(ident='red', value=Outputs.RED)
-amber = StateWithValue(ident='amber', value=Outputs.AMBER)
-green = StateWithValue(ident='green', value=Outputs.GREEN)
+flashing_red = State(ident='flashing_red', value=Outputs.FLASHING_RED)  # 3. The states.
+red = State(ident='red', value=Outputs.RED)
+amber = State(ident='amber', value=Outputs.AMBER)
+green = State(ident='green', value=Outputs.GREEN)
 
 red.actions[Inputs.RED_TIMEOUT] = green.action  # 4a. The *state* actions.
 green.actions[Inputs.GREEN_TIMEOUT] = amber.action
@@ -326,11 +326,10 @@ For more state machine examples see ``test_statmach.py``.
 
 ### Pythonic Aspects of this Module
 
-  1. ``Machine`` is a ``State`` (inheritance), so that machines can be nested.
-  2. Both ``State`` and ``Machine`` are context managers,
+  1. Both ``State`` and ``Machine`` are context managers,
      which allows for enter and exit code and error handling.
-  3. Use Python ``with`` for executing a ``Machine``.
-  4. Warnings (python ``warnings`` module) can optionally be issued if 
+  2. Use Python ``with`` for executing a ``Machine``.
+  3. Warnings (python ``warnings`` module) can optionally be issued if 
      input events handled changes during execution.
 
 ### Formal Definition
@@ -367,5 +366,3 @@ superset of a Mealy Machine because:
   3. Has extensive error control via Python exceptions and handling in 
      ``__exit__``.
   4. Has machine actions that can be 'overridden' by state actions.
-  5. The machine is also a state and therefore machines can be nested.
-
