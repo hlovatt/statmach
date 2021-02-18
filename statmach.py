@@ -9,7 +9,7 @@ __copyright__ = "Howard C Lovatt, 2021 onwards."
 __license__ = "MIT https://opensource.org/licenses/MIT."
 __repository__ = "https://github.com/hlovatt/statmech"
 __description__ = "Pythonic Finite State Machine with both action outputs (Mearly) and state outputs (Moore)"
-__version__ = "1.0.0"  # Version set by https://github.com/hlovatt/tag2ver
+__version__ = "1.0.1"  # Version set by https://github.com/hlovatt/tag2ver
 
 import sys
 
@@ -148,7 +148,7 @@ class Machine:
     @property
     def events(self):
         """The set of events the machine or its current state can handle."""
-        return self.actions.keys() | self._state.actions.keys()
+        return set(self.actions.keys()).union(self._state.actions.keys())
 
     # Doesn't use keyword argument, unlike other methods, because Micropython's `schedule` can't use keywords.
     def fire(self, event):

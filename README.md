@@ -63,7 +63,9 @@ The steps to make a state machine are:
      with just class attributes.
   2. Define outputs,
      which is often an enum but could be as complicated as a function 
-     to execute to obtain a derived value.
+     to execute to obtain a derived value
+     or as simple as `None` (the default) if the output is a side effect 
+     of entry and exit to the state (common in embedded applications).
   3. Define states (class ``State``).
   4. Define actions (tuples of new state and new value)
      to take when events fire (add actions to the states and the machine).
@@ -118,12 +120,11 @@ with Machine(initial_state=s_i) as machine:  # 5. Define the machine.
 Note how the startup is dealt with, initially outputting a 0 for either input.
 This special start up condition is achieved using a
 start up state that is not used again after the first event is fired.
-This unique startup state is a common feature of state space machines.
+This unique startup state is a common feature of state machines.
 
 The edge detector is an example of a state machine that has an 
 output associated with each action;
-these are called Mealy Machine (see below),
-and they use the class ``State`` to define their states.
+these are called Mealy Machine (see below).
 
 A more complicated example is a traffic light machine:
 
@@ -211,8 +212,7 @@ which makes the code shorter, easier to maintain, and easier to debug.
 
 The traffic light machine is an example of a state machine that has an output 
 associated with each state,
-these are called Moore Machines (see below), and they use the class 
-``StateWithValue`` to define their states.
+these are called Moore Machines (see below).
 
 The traffic light example can be run on real hardware, 
 for example a [PyBoard](https://store.micropython.org/product/PYBv1.1H).
@@ -268,11 +268,11 @@ def main():
     flashing_red = FlashingRed()
 
     traffic_lights = Machine(initial_state=start)  # The traffic light machine.
-    traffic_lights.actions[Events.RED_TIMEOUT] = (flashing_red, None)  # Catch anything unexpected.
-    traffic_lights.actions[Events.AMBER_TIMEOUT] = (flashing_red, None)
-    traffic_lights.actions[Events.GREEN_TIMEOUT] = (flashing_red, None)
-    traffic_lights.actions[Events.ERROR] = (flashing_red, None)
-    traffic_lights.actions[Events.START] = (flashing_red, None)
+    traffic_lights.actions[Events.RED_TIMEOUT] = flashing_red.action  # Catch anything unexpected.
+    traffic_lights.actions[Events.AMBER_TIMEOUT] = flashing_red.action
+    traffic_lights.actions[Events.GREEN_TIMEOUT] = flashing_red.action
+    traffic_lights.actions[Events.ERROR] = flashing_red.action
+    traffic_lights.actions[Events.START] = flashing_red.action
 
     tl_fire_ref = traffic_lights.fire  # Store the function reference locally to avoid allocation in interrupt.
     error = Switch()
@@ -300,15 +300,19 @@ def main():
     green = LEDState(led_num=2, time_on=3, event=Events.GREEN_TIMEOUT)
     amber = LEDState(led_num=3, time_on=0.5, event=Events.AMBER_TIMEOUT)
 
-    red.actions[Events.RED_TIMEOUT] = (green, None)
-    green.actions[Events.GREEN_TIMEOUT] = (amber, None)
-    amber.actions[Events.AMBER_TIMEOUT] = (red, None)
-    start.actions[Events.START] = (red, None)
+    red.actions[Events.RED_TIMEOUT] = green.action
+    green.actions[Events.GREEN_TIMEOUT] = amber.action
+    amber.actions[Events.AMBER_TIMEOUT] = red.action
+    start.actions[Events.START] = red.action
 
     with traffic_lights:
         _ = traffic_lights.fire(event=Events.START)  # Start the machine once all the setup is complete.
         while True:  # Keep running timers (and other peripherals), but otherwise do nothing.
             wfi()
+
+
+if __name__ == '__main__':
+    main()
 ```
 
 The Micropython code is as for the desktop Python code above for,
@@ -329,15 +333,16 @@ For more state machine examples see ``test_statmach.py``.
   1. Both ``State`` and ``Machine`` are context managers,
      which allows for enter and exit code and error handling.
   2. Use Python ``with`` for executing a ``Machine``.
-  3. Warnings (python ``warnings`` module) can optionally be issued if 
-     input events handled changes during execution.
+  3. Code is compatible with Python 3.5+ and MicroPython 1.12+.
 
 ### Formal Definition
 
 The state machine implemented is a Mealy machine, 
 see https://en.wikipedia.org/wiki/Mealy_machine,
-but a Moore Machine, the other common type of state machine, 
-can also be easily represented see ``StateWithValue``.
+but a Moore Machine (https://en.wikipedia.org/wiki/Moore_machine), 
+the other common type of state machine, 
+can also be easily represented by giving a state a value and 
+using the state's ``action`` method when registering events.
 The formal definition of a Mealy machine is a 5-tuple (S, S0, Σ, Λ, T) 
 that consisting of the following:
 
@@ -358,11 +363,16 @@ In the strictest sense the state machine implemented by this module is
 superset of a Mealy Machine because:
 
   1. The code does not enforce that there are a fixed set of: states (S), 
-     events (Σ), etc. and these sets can be
+     and these sets can be
      added to or removed from whilst executing the machine.
+     That the set of events is constant is however enforced.
+  2. Although the set of events handled is constant the actions associated with
+     the events can be changed whilst executing the machine.
   2. Both the machine and the state classes can be extended to add extra 
      fields to them
      (thus giving extra state that is not part of the state machine 'per se').
-  3. Has extensive error control via Python exceptions and handling in 
-     ``__exit__``.
-  4. Has machine actions that can be 'overridden' by state actions.
+  3. Side effects of the ``__entry__`` and ``__exit__`` methods can be the 
+     outputs (common in embedded applications).
+  4. Has extensive error control via Python exceptions and error handling by 
+     ``__exit__`` methods.
+  5. Has machine actions that can be 'overridden' by state actions.
