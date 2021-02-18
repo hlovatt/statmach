@@ -221,7 +221,8 @@ The complete project is on
 The code is below and is an example of a third type of state machine, 
 one were the output is a side effect of entering and leaving the states
 (it is therefore a variation on a Moore Machine).
-In particular the ``__entry__`` and ``__exit__`` methods affect control the outputs:
+In particular side effects of the ``__entry__`` and ``__exit__`` methods 
+control the outputs:
 
 ```python
 from statmach import State, Machine
