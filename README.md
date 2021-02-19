@@ -363,10 +363,9 @@ that consisting of the following:
 In the strictest sense the state machine implemented by this module is 
 superset of a Mealy Machine because:
 
-  1. The code does not enforce that there are a fixed set of: states (S), 
-     and these sets can be
-     added to or removed from whilst executing the machine.
-     That the set of events is constant is however enforced.
+  1. The code does not enforce that there are a fixed set of states, S, 
+     and this set can be added to or removed from whilst executing the machine.
+     However, the set of events handled is constant.
   2. Although the set of events handled is constant the actions associated with
      the events can be changed whilst executing the machine.
   2. Both the machine and the state classes can be extended to add extra 
