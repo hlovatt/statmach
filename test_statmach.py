@@ -1,6 +1,7 @@
 """Test code and examples for ``statmach``."""
 
 import enum
+from time import time
 
 import pytest
 
@@ -12,7 +13,7 @@ __copyright__ = statmach.__copyright__
 __license__ = statmach.__license__
 __repository__ = statmach.__repository__
 __description__ = "Test code and examples for ``statmach``."
-__version__ = "1.0.5"  # Version set by https://github.com/hlovatt/tag2ver
+__version__ = "1.0.6"  # Version set by https://github.com/hlovatt/tag2ver
 
 log = []
 
@@ -155,6 +156,29 @@ class Test_statmach:
             assert machine.state is flashing_red
             assert machine.fire(Inputs.ERROR) is Outputs.FLASHING_RED
             assert machine.state is flashing_red
+
+    def test_state_active_time(self):
+        class StateTime(State):
+            def __init__(self):
+                super().__init__(value=self.state_active_time)  # Value is a function.
+                self._enter_time = None
+
+            def state_active_time(self):
+                return time() - self._enter_time
+
+            def __enter__(self):
+                self._enter_time = time()
+                return self
+
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                self._enter_time = None
+                return False
+
+        state_active_time = 1
+        s = StateTime()
+        s.actions[state_active_time] = s.action
+        with Machine(initial_state=s) as m:
+            assert m.fire(state_active_time)() >= 0  # Value is a function which is called, 2nd `()`.
 
     def test_transitioning_between_states_and_enter_and_exit_overrides(self):
         Events = enum.Enum('Events', 'MACHINE_TO_STATE_0 STATE_TO_STATE_1')
@@ -308,7 +332,7 @@ class Test_statmach:
         with pytest.raises(AssertionError, match=(
                 'Set of current events handled, {<Events.s1: 2>, <Events.s0: 1>},'
                 ' not the same as set of new events, {<Events.s0: 1>}'
-            )
-        ):
+        )
+                           ):
             with Machine(initial_state=s0) as m:
                 m.fire(Events.s1)

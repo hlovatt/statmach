@@ -316,7 +316,7 @@ if __name__ == '__main__':
     main()
 ```
 
-The Micropython code is as for the desktop Python code above for,
+This Micropython code is as the desktop Python traffic-light code above,
 except that the output occurs in the ``__entry__`` and ``__exit__`` methods.
 In particular these methods start and stop timers and turn LEDs on and off.
 The timers in turn schedule events to fire when they timeout.
@@ -326,6 +326,40 @@ A further difference between the Micropython and desktop code
 is that the Micropython code has a start state, this state is to allow the
 state machine to be initialized before it is started 
 (which is common for state machines).
+
+The state machine's value can be anything including a function or method to call. 
+This allows for states that have additional state that is not 
+part of the state machine 'per se', which is common for in UI applications 
+were the state machine determines which screen is displayed but not its contents.
+A simple example of 'extra' state is a state that records how long it is 'the' state
+of the state machine:
+
+```python
+from statmach import  State, Machine
+from time import time
+
+class StateTime(State):
+  def __init__(self):
+      super().__init__(value=self.state_active_time)  # Value is a function.
+      self._enter_time = None
+
+  def state_active_time(self):
+      return time() - self._enter_time
+
+  def __enter__(self):
+      self._enter_time = time()
+      return self
+
+  def __exit__(self, exc_type, exc_val, exc_tb):
+      self._enter_time = None
+      return False
+
+state_active_time = 1
+s = StateTime()
+s.actions[state_active_time] = s.action
+with Machine(initial_state=s) as m:
+  assert m.fire(state_active_time)() >= 0  # Value is a function which is called, 2nd `()`.
+```
 
 For more state machine examples see ``test_statmach.py``.
 
