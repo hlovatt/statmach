@@ -9,7 +9,7 @@ __copyright__ = "Howard C Lovatt, 2021 onwards."
 __license__ = "MIT https://opensource.org/licenses/MIT."
 __repository__ = "https://github.com/hlovatt/statmach"
 __description__ = "Pythonic Finite State Machine with both action outputs (Mearly) and state outputs (Moore)"
-__version__ = "1.0.7"  # Version set by https://github.com/hlovatt/tag2ver
+__version__ = "1.0.8"  # Version set by https://github.com/hlovatt/tag2ver
 
 import sys
 
@@ -18,7 +18,7 @@ class State:
     """
     A state with an optional ``ident``, optional ``value``, and with actions.
     Actions are an event entry in the ``actions`` dictionary of a tuple of new state and new value.
-    ``Machine``'s ``fire`` method changes the machine state to the new state and return the new value.
+    ``Machine``'s ``fire`` method changes the machine state to the new state and returns the new value.
 
     A Mearly Machine has the new value associated with each action,
     whereas a Moore Machine has the new value associated with each state.
@@ -80,7 +80,8 @@ class State:
         the exception should be swallowed (true) or not (false).
         If ``__exit__`` has dealt with the exception, it should return true (swallow exception).
         Swallowing the exception means that the current state of the
-        state machine does *not* change and that the state machine continues to operate.
+        state machine does *not* change and that the state machine continues to operate
+        (the new value is however ``None``).
 
         :param exc_type: the type of the exception or ``None`` if no exception occurred.
         :param exc_val: the exception or ``None`` if no exception occurred.
@@ -119,7 +120,7 @@ class Machine:
 
     def __init__(self, *, initial_state):
         """
-        Create a state machine with an initial state, an optional identifier, and optional value.
+        Create a state machine with an initial state.
 
         :param initial_state: initial state of the machine.
         :raises AssertionError: if initial state is ``None``.
@@ -266,6 +267,7 @@ class Machine:
             # If it is a new `machine that hasn't entered the initial state then don't exit initial state.
             # Since state is not ``None``, it is an exit from a ``with`` statement.
             _ = self._state.__exit__(None, None, None)
+        self._state = None
         return False
 
     def __repr__(self):
