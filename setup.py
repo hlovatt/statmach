@@ -16,8 +16,10 @@ setuptools.setup(
     author=statmach.__author__,
     author_email='howard.lovatt@gmail.com',
     description=statmach.__description__,
-    # read_text('README.md') doesn't work because PyPi can't render README.md - PyPI bug.
-    long_description=f'See {statmach.__repository__} for detailed description.\n',  # read_text('README.md'),
+    long_description=read_text('README.md'),
+    # Alternative long description because read_text('README.md') doesn't work
+    # because PyPi can't render README.md - PyPI bug.
+    # long_description=f'See {statmach.__repository__} for detailed description.\n',
     long_description_content_type='text/markdown',
     py_modules=['statmach'],
     platforms=['any'],
