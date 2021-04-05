@@ -4,12 +4,12 @@ statmach: Pythonic Finite State Machine
 See ``__description__`` below or (better) ``README.md`` file in ``__repository__`` for more info.
 """
 
-__author__ = "Howard C Lovatt"
+__author__ = "Howard C Lovatt."
 __copyright__ = "Howard C Lovatt, 2021 onwards."
 __license__ = "MIT https://opensource.org/licenses/MIT."
 __repository__ = "https://github.com/hlovatt/statmach"
-__description__ = "Pythonic Finite State Machine with both action outputs (Mearly) and state outputs (Moore)"
-__version__ = "1.0.9"  # Version set by https://github.com/hlovatt/tag2ver
+__description__ = "Pythonic Finite State Machine with both action outputs (Mearly) and state outputs (Moore)."
+__version__ = "1.0.10"  # Version set by https://github.com/hlovatt/tag2ver
 
 import sys
 

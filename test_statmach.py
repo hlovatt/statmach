@@ -13,7 +13,7 @@ __copyright__ = statmach.__copyright__
 __license__ = statmach.__license__
 __repository__ = statmach.__repository__
 __description__ = "Test code and examples for ``statmach``."
-__version__ = "1.0.9"  # Version set by https://github.com/hlovatt/tag2ver
+__version__ = "1.0.10"  # Version set by https://github.com/hlovatt/tag2ver
 
 log = []
 

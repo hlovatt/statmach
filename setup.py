@@ -10,7 +10,7 @@ def read_text(file_name: str):
 
 setuptools.setup(
     name='statmach',
-    version='1.0.9',
+    version='1.0.10',
     url=statmach.__repository__,
     license='LIT License',
     # Originally used the text of the license.
