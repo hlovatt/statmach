@@ -10,9 +10,12 @@ def read_text(file_name: str):
 
 setuptools.setup(
     name='statmach',
-    version='1.0.8',
+    version='1.0.9',
     url=statmach.__repository__,
-    license=read_text('LICENSE'),
+    license='LIT License',
+    # Originally used the text of the license.
+    # This doesn't work, see issue #9327, because `license` string can't contain new lines.
+    # license=read_text('LICENSE'),
     author=statmach.__author__,
     author_email='howard.lovatt@gmail.com',
     description=statmach.__description__,
