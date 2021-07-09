@@ -93,7 +93,7 @@ class State:
 
     def __repr__(self):
         """String representation in same form as the constructor."""
-        return 'State(ident={}, value={})'.format(repr(self.ident), repr(self.value))
+        return '{}(ident={}, value={})'.format(self.__class__.__name__, repr(self.ident), repr(self.value))
 
 
 class Machine:
@@ -272,7 +272,7 @@ class Machine:
 
     def __repr__(self):
         """String representation in same form as the constructor, but using the current state for the initial state."""
-        return 'Machine(initial_state={})'.format(repr(self.state))
+        return '{}(initial_state={})'.format(self.__class__.__name__, repr(self.state))
 
 
 def _main():

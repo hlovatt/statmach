@@ -12,7 +12,7 @@ setuptools.setup(
     name='statmach',
     version='1.0.10',
     url=statmach.__repository__,
-    license='LIT License',
+    license='MIT License',
     # Originally used the text of the license.
     # This doesn't work, see issue #9327, because `license` string can't contain new lines.
     # license=read_text('LICENSE'),

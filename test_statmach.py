@@ -330,7 +330,7 @@ class Test_statmach:
         s0.actions = {Events.s0: s0.action, Events.s1: s1.action}
         s1.actions = {Events.s0: s0.action}  # Missing `s1`.
         with pytest.raises(AssertionError, match=(
-                'Set of current events handled, {<Events.s1: 2>, <Events.s0: 1>},'
+                'Set of current events handled, {<Events.s0: 1>, <Events.s1: 2>},'
                 ' not the same as set of new events, {<Events.s0: 1>}'
         )
                            ):
